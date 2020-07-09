@@ -1,0 +1,18 @@
+airflow:
+  extraVolumeMounts:
+    - name: synchronised-efs
+      mountPath: /opt/airflow/efs
+  extraVolumes:
+    - name: synchronised-efs
+      hostPath:
+        path: /opt/airflow/efs
+logs:
+  path: /opt/airflow/efs/logs 
+  persistence:
+    enabled: false
+dags:
+  path: /opt/airflow/efs/dags
+  doNotPickle: false
+  installRequirements: false
+  persistence:
+    enabled: false

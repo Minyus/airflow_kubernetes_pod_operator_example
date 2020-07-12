@@ -88,6 +88,37 @@ $ kubectl get all -n airflow
 
 11. DAGs defined in `helm_airflow_mnt/dags` directory will appear in the Airflow GUI. Turn on the DAG. The logs will be saved in `helm_airflow_mnt/logs` directory.
 
+## To use your Docker image
+
+The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls an image which does not require authentication.
+
+```python
+...
+image="gcr.io/gcp-runtimes/ubuntu_18_0_4",
+...
+```
+
+If your image requires authentication, you need to set the name of your secret created in your Kubernetes cluster, for example:
+
+```python
+...
+image_pull_secrets="my-image-pull-secret",
+...
+image="docker.io/pytorch/pytorch:1.5.1-cuda10.1-cudnn7-runtime",
+...
+```
+
+You can create a secret in your Kubernetes cluster using kubectl, for example:
+
+```bash
+$ kubectl create secret docker-registry \
+    my-image-pull-secret \
+    -n airflow \
+    --docker-server=https://index.docker.io/v1/ \
+    --docker-username=my-username \
+    --docker-password=my-password \
+    --docker-email=my-name@example.com
+```
 
 ## Reference
 
@@ -96,3 +127,5 @@ $ kubectl get all -n airflow
 - https://cloud.google.com/composer/docs/how-to/using/using-kubernetes-pod-operator
 
 - https://kubernetes.io/blog/2018/06/28/airflow-on-kubernetes-part-1-a-different-kind-of-operator/#using-the-kubernetes-operator
+
+- https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/

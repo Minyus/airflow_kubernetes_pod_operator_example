@@ -35,6 +35,7 @@ t1 = KubernetesPodOperator(
     name="k8s_pod_op_001",
     xcom_push=False,
     image="gcr.io/gcp-runtimes/ubuntu_18_0_4",
-    cmds=["echo"],
+    cmds=["echo", "Hello, World!"],
+    startup_timeout_seconds=120,
     **kubernetes_args
 )

@@ -122,6 +122,8 @@ $ kubectl create secret docker-registry \
 
 ## Reference
 
+- https://airflow.apache.org/docs/stable/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator._set_resources
+
 - https://github.com/helm/charts/tree/master/stable/airflow#option-2a----single-pvc-for-dags--logs
 
 - https://cloud.google.com/composer/docs/how-to/using/using-kubernetes-pod-operator

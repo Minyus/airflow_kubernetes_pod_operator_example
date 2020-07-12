@@ -53,7 +53,7 @@ $ kubectl create ns airflow
 
 ```bash
 $ helm repo update
-$ helm install "airflow" stable/airflow --version "7.1.6" --namespace "airflow" --values helm_airflow_values.yml
+$ helm install "airflow" stable/airflow --version "7.2.0" --namespace "airflow" --values helm_airflow_values.yml
 ```
 
 8. Wait for a minute or so until the status of the pods become `Running`.

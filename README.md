@@ -62,18 +62,27 @@ $ helm install "airflow" stable/airflow --version "7.2.0" --namespace "airflow" 
 $ kubectl get all -n airflow
 ```
 
-9. Set up port-forwarding by running:
+9. Set up port-forwarding by running either:
 
-```bash
-$ kubectl port-forward --namespace airflow <name of the airflow web pod> 8080:8080
-```
+  - One-liner
 
-or
+    ```bash
+    $ kubectl port-forward --namespace airflow $(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}") 8080:8080
+    ```
 
-```bash
-$ POD_NAME=$(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}")
-$ kubectl port-forward --namespace airflow $POD_NAME 8080:8080
-```
+  - Using a variable
+
+    ```bash
+    $ POD_NAME=$(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}")
+    $ kubectl port-forward --namespace airflow $POD_NAME 8080:8080
+    ```
+  
+  - Using `!!` (repeat previous command)
+
+    ```bash
+    $ kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}"
+    $ kubectl port-forward --namespace airflow $(!!) 8080:8080
+    ```
 
 10. Open a web browser and access http://localhost:8080/ to open the Airflow GUI.
 

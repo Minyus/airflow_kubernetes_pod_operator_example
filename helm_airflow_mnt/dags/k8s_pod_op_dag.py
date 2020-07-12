@@ -4,7 +4,10 @@ from airflow import DAG
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
 
 kubernetes_args = dict(
-    in_cluster=True, namespace="airflow", service_account_name="airflow",
+    in_cluster=True,
+    namespace="airflow",
+    service_account_name="airflow",
+    image_pull_secrets=None,
 )
 
 default_args = dict(

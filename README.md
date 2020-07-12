@@ -16,7 +16,19 @@ $ cd airflow_kubernetes_pod_operator_example
 $ brew install kubectl
 ```
 
-3. 
+3. If you have not installed helm, [install helm](https://helm.sh/docs/intro/install/) by running: 
+
+```bash
+$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
+```
+
+4. If you have not added "stable" helm repository, run:
+
+```bash
+$ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+```
+
+5. 
 
   - Set up a single-node Kubernetes cluster:
 
@@ -30,37 +42,64 @@ $ brew install kubectl
 
   - Alternatively, if you already have a single-node Kubernetes cluster and want to use it, copy the contents of `helm_airflow_mnt` directory to `/opt/airflow/efs` directory in the machine running the cluster.
 
-
-4. If you have not installed helm, [install helm](https://helm.sh/docs/intro/install/) by running: 
-
-```bash
-$ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
-```
-
-5. If you have not added "stable" helm repository, run:
+6. Create "airflow" namespace in the Kubernetes cluster, install stable/airflow Helm chart, and wait for a minute or so until the status of the pods become `Running`.
 
 ```bash
-$ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+$ kubectl create ns airflow 
+  helm repo update 
+  helm install "airflow" stable/airflow --version "7.2.0" --namespace "airflow" --values helm_airflow_values.yml 
+  kubectl get po -n airflow
 ```
 
-6. Create "airflow" namespace in the Kubernetes cluster by running:
+7. Set up pulling a Docker image
 
-```bash
-$ kubectl create ns airflow
-```
+- The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls an image which does not require authentication.
 
-7. Install airflow helm chart by running:
+  ```python
+  ...
+  image="gcr.io/gcp-runtimes/ubuntu_18_0_4",
+  ...
+  ```
 
-```bash
-$ helm repo update
-$ helm install "airflow" stable/airflow --version "7.2.0" --namespace "airflow" --values helm_airflow_values.yml
-```
+  Proceed to step 9. if you want to try KubernetesPodOperator without using your Docker image.
 
-8. Wait for a minute or so until the status of the pods become `Running`.
+- To use another Docker image, modify the DAG code, for example:
 
-```bash
-$ kubectl get all -n airflow
-```
+  ```python
+  ...
+  image="docker.io/pytorch/pytorch:1.5.1-cuda10.1-cudnn7-runtime",
+  ...
+  ```
+
+8. If your image requires authentication to pull from the registry, set up the secret.
+
+  8.1. Create a secret in your Kubernetes cluster using kubectl, for example:
+
+  ```bash
+  $ kubectl create secret docker-registry \
+      my-image-pull-secret \
+      -n airflow \
+      --docker-server=https://index.docker.io/v1/ \
+      --docker-username=my-username \
+      --docker-password=my-password \
+      --docker-email=my-name@example.com
+  ```
+
+  8.2 Configure to use the secret in either:
+  
+  - Service Account: 
+
+    ```bash
+    $ kubectl patch sa airflow -n airflow -p '{\"imagePullSecrets\": [{\"name\": \"my-image-pull-secret\"}]}'
+    ```
+
+  - KubernetesPodOperator:
+
+    ```python
+    ...
+    image_pull_secrets="my-image-pull-secret",
+    ...
+    ```
 
 9. Set up port-forwarding by running either:
 
@@ -74,7 +113,7 @@ $ kubectl get all -n airflow
 
     ```bash
     $ POD_NAME=$(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}")
-    $ kubectl port-forward --namespace airflow $POD_NAME 8080:8080
+      kubectl port-forward --namespace airflow $POD_NAME 8080:8080
     ```
   
   - Using `!!` (repeat previous command)
@@ -88,37 +127,6 @@ $ kubectl get all -n airflow
 
 11. DAGs defined in `helm_airflow_mnt/dags` directory will appear in the Airflow GUI. Turn on the DAG. The logs will be saved in `helm_airflow_mnt/logs` directory.
 
-## To use your Docker image
-
-The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls an image which does not require authentication.
-
-```python
-...
-image="gcr.io/gcp-runtimes/ubuntu_18_0_4",
-...
-```
-
-If your image requires authentication, you need to set the name of your secret created in your Kubernetes cluster, for example:
-
-```python
-...
-image_pull_secrets="my-image-pull-secret",
-...
-image="docker.io/pytorch/pytorch:1.5.1-cuda10.1-cudnn7-runtime",
-...
-```
-
-You can create a secret in your Kubernetes cluster using kubectl, for example:
-
-```bash
-$ kubectl create secret docker-registry \
-    my-image-pull-secret \
-    -n airflow \
-    --docker-server=https://index.docker.io/v1/ \
-    --docker-username=my-username \
-    --docker-password=my-password \
-    --docker-email=my-name@example.com
-```
 
 ## Reference
 
@@ -131,3 +139,5 @@ $ kubectl create secret docker-registry \
 - https://kubernetes.io/blog/2018/06/28/airflow-on-kubernetes-part-1-a-different-kind-of-operator/#using-the-kubernetes-operator
 
 - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+
+- https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account

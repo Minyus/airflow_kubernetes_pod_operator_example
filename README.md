@@ -101,27 +101,11 @@ $ kubectl create ns airflow
     ...
     ```
 
-9. Set up port-forwarding by running either:
+9. Set up port-forwarding by running:
 
-  - One-liner
-
-    ```bash
-    $ kubectl port-forward --namespace airflow $(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}") 8080:8080
-    ```
-
-  - Using a variable
-
-    ```bash
-    $ POD_NAME=$(kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}")
-      kubectl port-forward --namespace airflow $POD_NAME 8080:8080
-    ```
-  
-  - Using `!!` (repeat previous command)
-
-    ```bash
-    $ kubectl get pods --namespace airflow -l "component=web,app=airflow" -o jsonpath="{.items[0].metadata.name}"
-    $ kubectl port-forward --namespace airflow $(!!) 8080:8080
-    ```
+```bash
+$ kubectl port-forward -n airflow service/airflow-web 8080:8080 
+```
 
 10. Open a web browser and access http://localhost:8080/ to open the Airflow GUI.
 

@@ -22,3 +22,9 @@ dags:
   installRequirements: false
   persistence:
     enabled: false
+web:
+  nodeSelector: {}
+  service:
+    type: NodePort 
+    nodePort:
+      http: 30080 

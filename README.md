@@ -3,46 +3,49 @@
 An example set up to use 
 [Airflow's KubernetesPodOperator](https://airflow.apache.org/docs/stable/_api/airflow/contrib/operators/kubernetes_pod_operator/index.html#airflow.contrib.operators.kubernetes_pod_operator.KubernetesPodOperator._set_resources) in a laptop (macOS or Windows) or an on-premise machine (Linux) running a single-node Kubernetes cluster for development or testing.
 
-1. Clone this repository and cd into it. 
+### 1. Clone this repository and cd into it. 
 
 ```bash
 $ git clone https://github.com/Minyus/airflow_kubernetes_pod_operator_example.git
 $ cd airflow_kubernetes_pod_operator_example
 ```
 
-2. If you have not installed kubectl, [install kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/). If Homebrew is available, you can run:
+### 2. Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/) if you haven't. Homebrew can be used if available.
 
 ```bash
 $ brew install kubectl
 ```
 
-3. If you have not installed helm, [install helm](https://helm.sh/docs/intro/install/) by running: 
+### 3. Install [helm](https://helm.sh/docs/intro/install/) if you haven't. 
 
 ```bash
 $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ```
 
-4. If you have not added "stable" helm repository, run:
+### 4. Add "stable" helm repository if you haven't.
 
 ```bash
 $ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 ```
 
-5. 
+### 5. Set up a Kubernetes cluster.
 
-  - Set up a single-node Kubernetes cluster:
+  - [Option 1: create a new cluster using `kind`] (recommended for initial prototyping)
 
-    1. [install Docker Desktop](https://docs.docker.com/desktop/#download-and-install)
-    2. [install kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (Kubernetes IN Docker)
-    3. run:
+    1. Install [Docker Desktop](https://docs.docker.com/desktop/#download-and-install) if you haven't
+    2. Install [kind](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) (Kubernetes IN Docker) if you haven't
+    3. Create a cluster by running:
 
     ```bash
     $ kind create cluster --config kind_config.yml
     ```
 
-  - Alternatively, if you already have a single-node Kubernetes cluster and want to use it, copy the contents of `helm_airflow_mnt` directory to `/opt/airflow/efs` directory in the machine running the cluster.
+  - [Option 2: use a cluster already created] 
+    
+    1. copy the contents of `helm_airflow_mnt` directory to `/opt/airflow/efs` directory in the machine running the cluster. 
+    2. To use a multi-node Kubernetes cluster for production, you will need to set up a Persistent Volume with `ReadWriteMany` support instead of `hostPath` in `helm_airflow_values.yml`.
 
-6. Create "airflow" namespace in the Kubernetes cluster, install stable/airflow Helm chart, and wait for a minute or so until the status of the pods become `Running`.
+### 6. Create "airflow" namespace in the Kubernetes cluster, install stable/airflow Helm chart, and wait for a minute or so until the status of the pods become `Running`.
 
 ```bash
 $ kubectl create ns airflow 
@@ -51,7 +54,7 @@ $ kubectl create ns airflow
   kubectl get po -n airflow
 ```
 
-7. Set up pulling a Docker image
+### 7. Set up pulling a Docker image
 
 - The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls an image which does not require authentication.
 
@@ -71,9 +74,9 @@ $ kubectl create ns airflow
   ...
   ```
 
-8. If your image requires authentication to pull from the registry, set up the secret.
+### 8. If your image requires authentication to pull from the registry, set up the secret.
 
-  8.1. Create a secret in your Kubernetes cluster using kubectl, for example:
+#### 8.1. Create a secret in your Kubernetes cluster using kubectl, for example:
 
   ```bash
   $ kubectl create secret docker-registry \
@@ -85,7 +88,7 @@ $ kubectl create ns airflow
       --docker-email=my-name@example.com
   ```
 
-  8.2 Configure to use the secret in either:
+  #### 8.2. Configure to use the secret in either:
   
   - Service Account: 
 
@@ -101,16 +104,24 @@ $ kubectl create ns airflow
     ...
     ```
 
-9. Set up port-forwarding by running:
+### 9. Access the Airflow Web UI using a web browser:
 
-```bash
-$ kubectl port-forward -n airflow service/airflow-web 8080:8080 
-```
+  - If you chose [Option 1: create a new cluster using `kind`]:
+  
+    Access http://localhost:8080/
+  
+    DAGs defined in `helm_airflow_mnt/dags` directory will appear in the Airflow GUI. 
+    The logs will be saved in `helm_airflow_mnt/logs` directory.
+  
+  - If you chose [Option 2: use a cluster already created]:
+  
+    Access http://$IP_ADDRESS_OF_A_NODE:30080/
 
-10. Open a web browser and access http://localhost:8080/ to open the Airflow GUI.
+    You can check the IP address of a node by running:
 
-11. DAGs defined in `helm_airflow_mnt/dags` directory will appear in the Airflow GUI. Turn on the DAG. The logs will be saved in `helm_airflow_mnt/logs` directory.
-
+    ```
+    $ kubectl get nodes -n airflow -o jsonpath="{.items[0].status.addresses[0].address}"
+    ```
 
 ## Reference
 

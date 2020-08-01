@@ -14,7 +14,7 @@ airflow:
       hostPath:
         path: /opt/airflow/efs
 logs:
-  path: /opt/airflow/efs/logs 
+  path: /opt/airflow/efs/logs
   persistence:
     enabled: false
 dags:
@@ -26,6 +26,6 @@ dags:
 web:
   nodeSelector: {}
   service:
-    type: NodePort 
+    type: NodePort
     nodePort:
-      http: 30080 
+      http: 30080

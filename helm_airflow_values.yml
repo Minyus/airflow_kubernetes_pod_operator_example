@@ -1,4 +1,7 @@
 airflow:
+  image:
+    repository: apache/airflow
+    tags: 1.10.11-python3.6
   config:
     AIRFLOW__CORE__DEFAULT_TIMEZONE: utc
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "False"
@@ -24,8 +27,15 @@ dags:
   persistence:
     enabled: false
 web:
-  nodeSelector: {}
   service:
     type: NodePort
     nodePort:
       http: 30080
+  nodeSelector: {} # {kubernetes.io/hostname: ""}
+scheduler:
+  nodeSelector: {} # {kubernetes.io/hostname: ""}
+flower:
+  nodeSelector: {} # {kubernetes.io/hostname: ""}
+workers:
+  nodeSelector: {} # {kubernetes.io/hostname: ""}
+  replicas: 1

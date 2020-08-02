@@ -50,9 +50,11 @@ $ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 ```bash
 $ kubectl create ns airflow 
   helm repo update 
-  helm install "airflow" stable/airflow --version "7.2.0" --namespace "airflow" --values helm_airflow_values.yml 
-  kubectl get po -n airflow
+  helm install "airflow" stable/airflow --version "7.3.0" --namespace "airflow" --values helm_airflow_values.yml 
+  kubectl get po -n airflow --watch
 ```
+
+To stop watching by `--watch` option, hit `Ctrl + C`.
 
 ### 7. Set up pulling a Docker image
 
@@ -70,7 +72,7 @@ $ kubectl create ns airflow
 
   ```python
   ...
-  image="docker.io/pytorch/pytorch:1.5.1-cuda10.1-cudnn7-runtime",
+  image="docker.io/pytorch/pytorch:1.6.0-cuda10.1-cudnn7-runtime",
   ...
   ```
 

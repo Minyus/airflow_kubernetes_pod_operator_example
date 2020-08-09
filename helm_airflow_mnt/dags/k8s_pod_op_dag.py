@@ -5,6 +5,36 @@ from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOpera
 from airflow.kubernetes.volume import Volume
 
 
+def get_kubernetes_args(pod_yaml: str):
+    """
+    function prepared as
+    pod_template_file arg could not be used due to the issue:
+    https://github.com/apache/airflow/issues/10037
+    """
+
+    d = yaml.safe_load(pod_yaml)
+
+    metadata = d["metadata"]
+    spec = d["spec"]
+
+    volumes = []
+    for vd in spec["volumes"]:
+        name = vd.pop("name")
+        v = Volume(name=name, configs=vd)
+        volumes.append(v)
+
+    kubernetes_args = dict(
+        in_cluster=True,
+        name=metadata["name"],
+        namespace=metadata["namespace"],
+        service_account_name=spec["serviceAccountName"],
+        image_pull_secrets=spec["imagePullSecrets"],
+        volumes=volumes,
+        init_containers=spec["initContainers"],
+    )
+    return kubernetes_args
+
+
 pod_yaml = """
 apiVersion: v1
 kind: Pod
@@ -80,28 +110,9 @@ spec:
       command: ["bash", "-c", "echo 'Pod completed.'"]
 """
 
-# pod_template_file could not be used due to the issue: https://github.com/apache/airflow/issues/10037
+# Reference: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
 
-d = yaml.safe_load(pod_yaml)
-
-metadata = d["metadata"]
-spec = d["spec"]
-
-volumes = []
-for vd in spec["volumes"]:
-    name = vd.pop("name")
-    v = Volume(name=name, configs=vd)
-    volumes.append(v)
-
-kubernetes_args = dict(
-    in_cluster=True,
-    name=metadata["name"],
-    namespace=metadata["namespace"],
-    service_account_name=spec["serviceAccountName"],
-    image_pull_secrets=spec["imagePullSecrets"],
-    volumes=volumes,
-    init_containers=spec["initContainers"],
-)
+kubernetes_args = get_kubernetes_args(pod_yaml)
 
 default_args = dict(
     owner="airflow",
@@ -126,7 +137,7 @@ t1 = KubernetesPodOperator(
     task_id="k8s_pod_op_task_001",
     startup_timeout_seconds=120,
     do_xcom_push=False,  # xcom_push renamed to do_xcom_push in Airflow 1.10.11
-    image="gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5",  # no-op
+    image="gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5",
     cmds=["bash", "-c", "echo 'Pod completed.'"],
-    **kubernetes_args,
+    **kubernetes_args
 )

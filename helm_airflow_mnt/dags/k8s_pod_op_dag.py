@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
-
+import yaml
 from airflow import DAG
 from airflow.contrib.operators.kubernetes_pod_operator import KubernetesPodOperator
-
 from airflow.kubernetes.volume import Volume
-import yaml
+
 
 pod_yaml = """
 apiVersion: v1
@@ -14,7 +13,7 @@ metadata:
   namespace: airflow
 spec:
   serviceAccountName: airflow
-  imagePullSecrets: 
+  imagePullSecrets:
   restartPolicy: Never
   volumes:
     - name: tmp-dir
@@ -70,15 +69,15 @@ spec:
         - bash
         - -c
         - >
-          echo "Keeping the temporary data for 1 day for backup." 
-          && ls -lah /tmp 
-          && sleep 86400
+          echo "[Contents of the temporal directory]" 
+          && ls -la /tmp 
       volumeMounts:
         - name: tmp-dir
           mountPath: /tmp
   containers:
     - name: no-op
       image: gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5
+      command: ["bash", "-c", "echo 'Pod completed.'"]
 """
 
 # pod_template_file could not be used due to the issue: https://github.com/apache/airflow/issues/10037
@@ -128,5 +127,6 @@ t1 = KubernetesPodOperator(
     startup_timeout_seconds=120,
     do_xcom_push=False,  # xcom_push renamed to do_xcom_push in Airflow 1.10.11
     image="gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5",  # no-op
+    cmds=["bash", "-c", "echo 'Pod completed.'"],
     **kubernetes_args,
 )

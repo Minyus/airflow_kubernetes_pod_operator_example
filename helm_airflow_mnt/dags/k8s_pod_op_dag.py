@@ -27,8 +27,12 @@ def get_kubernetes_args(pod_yaml: str):
         in_cluster=True,
         name=metadata.get("name"),
         namespace=metadata.get("namespace"),
-        service_account_name=spec.get("serviceAccountName"),
+        service_account_name=spec.get("serviceAccountName", "default"),
         image_pull_secrets=spec.get("imagePullSecrets"),
+        hostnetwork=spec.get("hostNetwork"),
+        affinity=spec.get("affinity"),
+        node_selectors=spec.get("nodeSelector"),
+        tolerations=spec.get("tolerations"),
         volumes=volumes,
         init_containers=spec.get("initContainers"),
     )
@@ -44,6 +48,10 @@ metadata:
 spec:
   serviceAccountName: airflow
   imagePullSecrets:
+  hostNetwork:
+  affinity:
+  nodeSelector:
+  tolerations:
   restartPolicy: Never
   volumes:
     - name: tmp-dir
@@ -137,6 +145,7 @@ t1 = KubernetesPodOperator(
     task_id="k8s_pod_op_task_001",
     startup_timeout_seconds=120,
     do_xcom_push=False,  # xcom_push renamed to do_xcom_push in Airflow 1.10.11
+    log_events_on_failure=True,
     image="gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5",
     cmds=["bash", "-c", "echo 'Pod completed.'"],
     **kubernetes_args

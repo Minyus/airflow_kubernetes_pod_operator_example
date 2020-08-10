@@ -53,7 +53,7 @@ $ sh setup.sh
 $ kubectl get po -n airflow
 ```
 
-## 7. Set up pulling a Docker image
+### 7. Set up pulling a Docker image
 
 - The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls images which do not require authentication.
 

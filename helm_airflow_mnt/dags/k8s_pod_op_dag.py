@@ -44,9 +44,9 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: pod
-  namespace: airflow
+  namespace: airflow-tasks
 spec:
-  serviceAccountName: airflow
+  serviceAccountName: airflow-tasks
   imagePullSecrets:
   hostNetwork:
   affinity:

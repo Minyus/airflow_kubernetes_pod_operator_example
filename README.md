@@ -22,13 +22,7 @@ $ brew install kubectl
 $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash
 ```
 
-### 4. Add "stable" helm repository if you haven't.
-
-```bash
-$ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-```
-
-### 5. Set up a Kubernetes cluster.
+### 4. Set up a Kubernetes cluster.
 
   - [Option 1: create a new cluster using `kind`] (recommended for initial prototyping)
 
@@ -47,18 +41,19 @@ $ helm repo add stable https://kubernetes-charts.storage.googleapis.com/
       - [Option A] run Airflow pods in a specific node using `nodeSelector` or `affinity`; or
       - [Option B] set up a Persistent Volume with `ReadWriteMany` support instead of `hostPath`
 
-### 6. Create "airflow" namespace in the Kubernetes cluster, install stable/airflow Helm chart, and wait for a minute or so until the status of the pods become `Running`.
+### 5. Install stable/airflow Helm chart to "airflow" namespace, and set up "airflow-tasks" namespace.
 
 ```bash
-$ kubectl create ns airflow 
-  helm repo update 
-  helm install "airflow" stable/airflow --version "7.3.0" --namespace "airflow" --values helm_airflow_values.yml 
-  kubectl get po -n airflow --watch
+$ sh setup.sh
 ```
 
-To stop watching by `--watch` option, hit `Ctrl + C`.
+### 6. Wait for a minute or so until the status of all of the 6 Airflow pods become `Running`.
 
-### 7. Set up pulling a Docker image
+```bash
+$ kubectl get po -n airflow
+```
+
+## 7. Set up pulling a Docker image
 
 - The example DAG code (`helm_airflow_mnt/dags/k8s_pod_op_dag.py`) pulls images which do not require authentication.
 
@@ -73,7 +68,7 @@ To stop watching by `--watch` option, hit `Ctrl + C`.
   ```bash
   $ kubectl create secret docker-registry \
       my-image-pull-secret \
-      -n airflow \
+      -n airflow-tasks \
       --docker-server=https://index.docker.io/v1/ \
       --docker-username=my-username \
       --docker-password=my-password \
@@ -85,7 +80,7 @@ To stop watching by `--watch` option, hit `Ctrl + C`.
   - [Option I] Service Account specified in the DAG code as `serviceAccountName`: 
 
     ```bash
-    $ kubectl patch sa airflow -n airflow -p '{\"imagePullSecrets\": [{\"name\": \"my-image-pull-secret\"}]}'
+    $ kubectl patch sa default -n airflow-tasks -p '{\"imagePullSecrets\": [{\"name\": \"my-image-pull-secret\"}]}'
     ```
 
   - [Option II] Pod in the DAG code:

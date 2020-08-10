@@ -18,19 +18,19 @@ def get_kubernetes_args(pod_yaml: str):
     spec = d["spec"]
 
     volumes = []
-    for vd in spec["volumes"]:
+    for vd in spec.get("volumes", []):
         name = vd.pop("name")
         v = Volume(name=name, configs=vd)
         volumes.append(v)
 
     kubernetes_args = dict(
         in_cluster=True,
-        name=metadata["name"],
-        namespace=metadata["namespace"],
-        service_account_name=spec["serviceAccountName"],
-        image_pull_secrets=spec["imagePullSecrets"],
+        name=metadata.get("name"),
+        namespace=metadata.get("namespace"),
+        service_account_name=spec.get("serviceAccountName"),
+        image_pull_secrets=spec.get("imagePullSecrets"),
         volumes=volumes,
-        init_containers=spec["initContainers"],
+        init_containers=spec.get("initContainers"),
     )
     return kubernetes_args
 

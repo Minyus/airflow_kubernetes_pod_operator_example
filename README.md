@@ -44,7 +44,7 @@ $ curl https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | b
 ### 5. Install stable/airflow Helm chart to "airflow" namespace, and set up "airflow-tasks" namespace.
 
 ```bash
-$ sh setup.sh
+$ bash setup.sh
 ```
 
 ### 6. Wait for a minute or so until the status of all of the 6 Airflow pods become `Running`.

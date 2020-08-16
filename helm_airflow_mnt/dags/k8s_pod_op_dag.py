@@ -16,6 +16,7 @@ def get_kubernetes_args(pod_yaml: str):
 
     metadata = d["metadata"]
     spec = d["spec"]
+    container = spec["containers"][0]
 
     volumes = []
     for vd in spec.get("volumes", []):
@@ -33,8 +34,11 @@ def get_kubernetes_args(pod_yaml: str):
         affinity=spec.get("affinity"),
         node_selectors=spec.get("nodeSelector"),
         tolerations=spec.get("tolerations"),
+        priority_class_name=spec.get("priorityClassName"),
         volumes=volumes,
         init_containers=spec.get("initContainers"),
+        image=container.get("image"),
+        cmds=container.get("command"),
     )
     return kubernetes_args
 
@@ -43,7 +47,7 @@ pod_yaml = """
 apiVersion: v1
 kind: Pod
 metadata:
-  name: pod
+  name: pod-001
   namespace: airflow-tasks
 spec:
   serviceAccountName: airflow-tasks
@@ -52,6 +56,7 @@ spec:
   affinity:
   nodeSelector:
   tolerations:
+  priorityClassName:
   restartPolicy: Never
   volumes:
     - name: tmp-dir
@@ -115,7 +120,10 @@ spec:
   containers:
     - name: no-op
       image: gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5
-      command: ["bash", "-c", "echo 'Pod completed.'"]
+      command:
+        - bash
+        - -c
+        - echo "Pod completed."
 """
 
 # Reference: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
@@ -146,7 +154,5 @@ t1 = KubernetesPodOperator(
     startup_timeout_seconds=120,
     do_xcom_push=False,  # xcom_push renamed to do_xcom_push in Airflow 1.10.11
     log_events_on_failure=True,
-    image="gcr.io/gcp-runtimes/ubuntu_16_0_4:0dfb79fb3719cc17532768e27fd3f9648da4b9a5",
-    cmds=["bash", "-c", "echo 'Pod completed.'"],
     **kubernetes_args
 )

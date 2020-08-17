@@ -1,0 +1,8 @@
+namespace: airflow-tasks
+secretGenerator:
+  - name: my-image-pull-secret
+    files:
+      - .dockerconfigjson=secret_docker_config.json
+    type: kubernetes.io/dockerconfigjson
+generatorOptions:
+  disableNameSuffixHash: true

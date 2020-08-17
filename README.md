@@ -65,22 +65,30 @@ $ kubectl get po -n airflow
 
 #### 8.1. Create a secret in your Kubernetes cluster using kubectl, for example:
 
-  ```bash
-  $ kubectl create secret docker-registry \
-      my-image-pull-secret \
-      -n airflow-tasks \
-      --docker-server=https://index.docker.io/v1/ \
-      --docker-username=my-username \
-      --docker-password=my-password \
-      --docker-email=my-name@example.com
-  ```
+  - [Option X] Native way:
+
+    ```bash
+    $ kubectl create secret docker-registry \
+        my-image-pull-secret \
+        -n airflow-tasks \
+        --docker-server=https://index.docker.io/v1/ \
+        --docker-username=my-username \
+        --docker-password=my-password \
+        --docker-email=my-name@example.com
+    ```
+
+  - [Option Y] Edit `kustomization/secret_docker_config.json` and use secret generator feature of kustomize:
+
+    ```bash
+    $ kubectl create -k ./kustomization
+    ```
 
   #### 8.2. Configure to enable the pod to use the secret to pull images as follows:
   
   - [Option I] Service Account specified in the DAG code as `serviceAccountName`: 
 
     ```bash
-    $ kubectl patch sa default -n airflow-tasks -p '{\"imagePullSecrets\": [{\"name\": \"my-image-pull-secret\"}]}'
+    $ kubectl patch sa airflow-tasks -n airflow-tasks -p '{\"imagePullSecrets\": [{\"name\": \"my-image-pull-secret\"}]}'
     ```
 
   - [Option II] Pod in the DAG code:
